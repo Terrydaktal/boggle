@@ -13,12 +13,12 @@
 
 using namespace std;
 
-void build_trie(char** trie);
-void add_word(const char* word, char** trie);
-int search_letter(const char letter, char*** index, int*** locscoreloc);
-void words_from(char ** index, int position, int depth, int running_score, int running_multiplier);
-void generate();
-void initialise_probability();
+_inline void build_trie(char** trie);
+_inline void add_word(const char* word, char** trie);
+_inline int search_letter(const char letter, char*** index, int*** locscoreloc);
+_inline void words_from(char ** index, int position, int depth, int running_score, int running_multiplier);
+_inline void generate();
+_inline void initialise_probability();
 
 int lookups = 0;
 string letter_sample;
@@ -43,7 +43,7 @@ int moves[16][8] = { {1, 4, 5, -1, -1, -1, -1, -1},
 int letter_scores[26] = {1,2,3,2,1,4,2,4,1,8,5,1,3,1,1,3,10,1,1,1,1,4,4,8,4,10};
 
 
-void build_trie(char** trie) {
+_inline void build_trie(char** trie) {
 	int count = 0;
 	fstream newfile;
 	newfile.open("words.txt", ios::in); //open a file to perform read operation using file object
@@ -57,7 +57,7 @@ void build_trie(char** trie) {
 	}	
 }
 
-void initialise_probability() {
+_inline void initialise_probability() {
 	fstream newfile;
 	newfile.open("letters.txt", ios::in); //open a file to perform read operation using file object
 	if (newfile.is_open()) {   //checking whether the file is open
@@ -70,7 +70,7 @@ void initialise_probability() {
 }
 
 
-void add_word(const char* word, char** trie) {
+_inline void add_word(const char* word, char** trie) {
 
 	char ** current = trie;
 	int i = 0;
@@ -93,7 +93,7 @@ void add_word(const char* word, char** trie) {
 
 }
 
-int search_letter(const char letter, char*** index, int*** loclocscoreloc) {
+_inline int search_letter(const char letter, char*** index, int*** loclocscoreloc) {
 	int i = 0;
 	char** current = *index;
 	lookups++;
@@ -127,7 +127,7 @@ int wordbonus_map[16] = { 2,2,3,1,1,1,1,1,1,1,1,1,1,1,1,1 };
 int letterbonus_map[16] = { 1,1,1,2,2,3,3,1,1,1,1,1,1,1,1,1 };
 int wordcount = 0;
 
-void words_from(char ** index, int position, int depth, int running_score, int running_multiplier) {
+_inline void words_from(char ** index, int position, int depth, int running_score, int running_multiplier) {
 
 	char letter = board[position];
 	running_string[depth] = letter;
@@ -178,18 +178,18 @@ void words_from(char ** index, int position, int depth, int running_score, int r
 
 static unsigned int g_seed;
          
-inline void fast_srand(int seed) {
+_inline void fast_srand(int seed) {
 	g_seed = seed;
 }
 
-inline int fast_rand(void) {
+_inline int fast_rand(void) {
 	g_seed = (214013 * g_seed + 2531011);
 	return (g_seed >> 16) & 0x7FFF;
 }
 
 
 
-inline void generate() {
+_inline void generate() {
 
 	for (int j = 0; j < 16; j++) {
 		board[j] = letter_sample[fast_rand() % 2350];
