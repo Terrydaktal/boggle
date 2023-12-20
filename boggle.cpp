@@ -13,12 +13,12 @@
 
 using namespace std;
 
-_inline void build_trie(char** trie);
-_inline void add_word(const char* word, char** trie);
-_inline int search_letter(const char letter, char*** index, int*** locscoreloc);
-_inline void words_from(char ** index, int position, int depth, int running_score, int running_multiplier);
-_inline void generate();
-_inline void initialise_probability();
+__inline void build_trie(char** trie);
+__inline void add_word(const char* word, char** trie);
+__inline int search_letter(const char letter, char*** index, int*** locscoreloc);
+__inline void words_from(char ** index, int position, int depth, int running_score, int running_multiplier);
+__inline void generate();
+__inline void initialise_probability();
 
 int lookups = 0;
 string letter_sample;
@@ -43,7 +43,7 @@ int moves[16][8] = { {1, 4, 5, -1, -1, -1, -1, -1},
 int letter_scores[26] = {1,2,3,2,1,4,2,4,1,8,5,1,3,1,1,3,10,1,1,1,1,4,4,8,4,10};
 
 
-_inline void build_trie(char** trie) {
+__inline void build_trie(char** trie) {
 	int count = 0;
 	fstream newfile;
 	newfile.open("words.txt", ios::in); //open a file to perform read operation using file object
@@ -57,7 +57,7 @@ _inline void build_trie(char** trie) {
 	}	
 }
 
-_inline void initialise_probability() {
+__inline void initialise_probability() {
 	fstream newfile;
 	newfile.open("letters.txt", ios::in); //open a file to perform read operation using file object
 	if (newfile.is_open()) {   //checking whether the file is open
@@ -70,7 +70,7 @@ _inline void initialise_probability() {
 }
 
 
-_inline void add_word(const char* word, char** trie) {
+__inline void add_word(const char* word, char** trie) {
 
 	char ** current = trie;
 	int i = 0;
@@ -93,7 +93,7 @@ _inline void add_word(const char* word, char** trie) {
 
 }
 
-_inline int search_letter(const char letter, char*** index, int*** loclocscoreloc) {
+__inline int search_letter(const char letter, char*** index) {
 	int i = 0;
 	char** current = *index;
 	lookups++;
@@ -107,10 +107,14 @@ _inline int search_letter(const char letter, char*** index, int*** loclocscorelo
 	i++;
 
 	if (current[26] != (char*)0) {
-		*loclocscoreloc = (int**) &current[26];
-		return 2;
-	}
-	else { return true; }
+		return (int)&current[26]; //it's a word and returns locscoreloc. scoreloc is just the true flag to indicate
+									//that it's a word but contains the scoreloc if the word has been found
+	}			
+					//score is score in the list of scores, scoreloc is the location of the score
+	                //in the list and is stored in the trie
+	                //locscoreloc is where in the trie the location is stored
+
+	else { return true; } // not a word but there is a longer word that starts with these letters 
 
 }
 
@@ -127,7 +131,9 @@ int wordbonus_map[16] = { 2,2,3,1,1,1,1,1,1,1,1,1,1,1,1,1 };
 int letterbonus_map[16] = { 1,1,1,2,2,3,3,1,1,1,1,1,1,1,1,1 };
 int wordcount = 0;
 
-_inline void words_from(char ** index, int position, int depth, int running_score, int running_multiplier) {
+
+
+__inline void words_from(char ** index, int position, int depth, int running_score, int running_multiplier) {
 
 	char letter = board[position];
 	running_string[depth] = letter;
@@ -135,28 +141,26 @@ _inline void words_from(char ** index, int position, int depth, int running_scor
 	depth++;
 	running_score = running_score + score_map[position] * letterbonus_map[position];
 	running_multiplier = running_multiplier * wordbonus_map[position];
-	
-	int** locscoreloc = NULL;
-	int result = search_letter(letter, &index, &locscoreloc);
+	int finalscore = (running_score * running_multiplier) + depth * 2;
+	int** locscoreloc = (int **)search_letter(letter, &index);
 
 	if (depth >= 2) {
-		if (!result){
+		if (!locscoreloc){ //if not a word then locscoreloc contains flag and it is false
 			return; 
 		}
 
-		if (result == 2) {
-			
-			if (*locscoreloc == (int*) 1) {
+		if ((int)locscoreloc >= 2) { //if a word then locscoreloc contains true flag or scoreloc
+			if (*locscoreloc == (int*)1) { //if it still contains true flag (i.e. word not yet found)
 				list_words[wordcount] = _strdup(running_string);
-				list_score[wordcount] = (running_score * running_multiplier) + depth * 2;
+				list_score[wordcount] = finalscore;
 				*locscoreloc = &(list_score[wordcount]);
 				score_cleanup[wordcount] = locscoreloc;
 				(wordcount)++;
 			}
 		
 			else {
-				if (**locscoreloc < ((running_score * running_multiplier) + depth * 2)) {
-					**locscoreloc = ((running_score * running_multiplier) + depth * 2);
+				if (**locscoreloc < finalscore) {
+					**locscoreloc = finalscore;
 				} 
 			}
 
@@ -178,18 +182,18 @@ _inline void words_from(char ** index, int position, int depth, int running_scor
 
 static unsigned int g_seed;
          
-_inline void fast_srand(int seed) {
+__inline void fast_srand(int seed) {
 	g_seed = seed;
 }
 
-_inline int fast_rand(void) {
+__inline int fast_rand(void) {
 	g_seed = (214013 * g_seed + 2531011);
 	return (g_seed >> 16) & 0x7FFF;
 }
 
 
 
-_inline void generate() {
+inline void generate() {
 
 	for (int j = 0; j < 16; j++) {
 		board[j] = letter_sample[fast_rand() % 2350];
@@ -200,10 +204,8 @@ _inline void generate() {
 	//cout << board << " ";
 	
 
-
 	for (int j = 0; j < 16; j++) {
-		words_from(trie, j, 0, 0, 1);
-	}
+		words_from(trie, j, 0, 0, 1);	}
 
 	for (int j = 0; j < 1600; j++) {
 		if (!list_words[j]) {
@@ -217,6 +219,18 @@ _inline void generate() {
 	memset(list_words, 0, wordcount * sizeof(void*));
 	memset(list_score, 0, wordcount * sizeof(void*));
 	totalwordcount += wordcount;
+}
+
+void threaded_generate (){
+
+		for (int i = 0; i < numboards; i++) {
+			generate();
+			while (wordcount < 95) {
+				wordcount = 0;
+				generate();
+			}
+			wordcount = 0;
+		}
 }
 
 int main()
@@ -235,10 +249,13 @@ int main()
 
 	auto begin = Clock::now();
 
-	//thread t(&generate, trie);
-	//thread t2(&generate, trie);
+	//thread t(&threaded_generate);
+	//thread t2(&threaded_generate);
 	for (int i = 0; i < numboards; i++) {
-		generate();
+		while (wordcount < 95) {
+			wordcount = 0;
+			generate();
+		}
 		wordcount = 0;
 	}
 	//t.join();
@@ -261,9 +278,8 @@ int main()
 	cout << 10000 << " random boards solved in "
 		<< elapsed_secs.count() << "seconds"  << "with " << lookups << " lookups" << 
 		" and "<< totalwordcount << " words " << endl;
-	cout << elapsed_secs.count() / totalwordcount;
+	cout << 10000 / elapsed_secs.count() << "bps";
 
-	
 }
 
 
