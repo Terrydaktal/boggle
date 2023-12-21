@@ -16,7 +16,7 @@ using namespace std;
 __inline void build_trie(char** trie);
 __inline void add_word(const char* word, char** trie);
 __inline int search_letter(const char letter, char*** index, int*** locscoreloc);
-__inline void words_from(char ** index, int position, int depth, int running_score, int running_multiplier);
+__inline int words_from(char ** index, int position, int depth, int running_score, int running_multiplier);
 __inline void generate();
 __inline void initialise_probability();
 
@@ -133,7 +133,7 @@ int wordcount = 0;
 
 
 
-__inline void words_from(char ** index, int position, int depth, int running_score, int running_multiplier) {
+__inline int words_from(char ** index, int position, int depth, int running_score, int running_multiplier) {
 
 	char letter = board[position];
 	running_string[depth] = letter;
@@ -143,14 +143,16 @@ __inline void words_from(char ** index, int position, int depth, int running_sco
 	running_multiplier = running_multiplier * wordbonus_map[position];
 	int finalscore = (running_score * running_multiplier) + depth * 2;
 	int** locscoreloc = (int **)search_letter(letter, &index);
+	int valid;
 
 	if (depth >= 2) {
 		if (!locscoreloc){ //if not a word then locscoreloc contains flag and it is false
-			return; 
+			return 0; 
 		}
 
-		if ((int)locscoreloc >= 2) { //if a word then locscoreloc contains true flag or scoreloc
-			if (*locscoreloc == (int*)1) { //if it still contains true flag (i.e. word not yet found)
+		if ((int)locscoreloc >= 2) { //if a valid word then locscoreloc contains true flag or scoreloc
+			valid = true;  //this letter has at least one valid word
+			if (*locscoreloc == (int*)1) { //if locscoreloc still contains true flag (it means word is valid but not already found)
 				list_words[wordcount] = _strdup(running_string);
 				list_score[wordcount] = finalscore;
 				*locscoreloc = &(list_score[wordcount]);
@@ -158,7 +160,7 @@ __inline void words_from(char ** index, int position, int depth, int running_sco
 				(wordcount)++;
 			}
 		
-			else {
+			else { //otherwise the word has been found already and only the score needs updating
 				if (**locscoreloc < finalscore) {
 					**locscoreloc = finalscore;
 				} 
@@ -178,6 +180,7 @@ __inline void words_from(char ** index, int position, int depth, int running_sco
 	}
 
 	board[position] = temp;
+	return valid;
 }
 
 static unsigned int g_seed;
@@ -205,19 +208,26 @@ inline void generate() {
 	
 
 	for (int j = 0; j < 16; j++) {
-		words_from(trie, j, 0, 0, 1);	}
+		if (!words_from(trie, j, 0, 0, 1)) {
+			break;
+		}
+	}
 
 	for (int j = 0; j < 1600; j++) {
 		if (!list_words[j]) {
 			break;
 		}
-		*(score_cleanup[j]) = (int*)1;
+		*(score_cleanup[j]) = (int*)1; //reset scores to true flags
 		//free(list_words[j]);
 
 	}
+
+
 	memset(score_cleanup, 0, wordcount * sizeof(void*));
 	memset(list_words, 0, wordcount * sizeof(void*));
 	memset(list_score, 0, wordcount * sizeof(void*));
+
+
 	totalwordcount += wordcount;
 }
 
@@ -235,18 +245,15 @@ void threaded_generate (){
 
 int main()
 {
-
-	initialise_probability();
 	
 	trie = new char*[27]();
 	build_trie(trie);
 	cout << allocbytes << " bytes allocated" << endl;
 
-	typedef std::chrono::high_resolution_clock Clock;
-
-
 	fast_srand(time(NULL));
+	initialise_probability();
 
+	typedef std::chrono::high_resolution_clock Clock;
 	auto begin = Clock::now();
 
 	//thread t(&threaded_generate);
@@ -264,22 +271,22 @@ int main()
 
 	
 	auto end = Clock::now();
-	//cout << totalwordcount << " ";
 
+	
+	std::chrono::duration<double, std::ratio<1, 1>> elapsed_secs = std::chrono::duration_cast<std::chrono::duration<double>>(end - begin);
+	cout << numboards << " random boards solved in "
+		<< elapsed_secs.count() << "seconds"  << "with " << lookups << " lookups" <<
+		" and "<< totalwordcount << " words " << endl;
+	cout << numboards / elapsed_secs.count() << "bps";
+
+	//cout << totalwordcount << " words";
 	//for (int i = 0; i < totalwordcount; i++) {
 	//	if (list_score[i] == 0) {
 	//		break;
 	//	}
 	//	cout << " " << list_words[i] << ": " << list_score[i] << " | ";
+
 	//}
-	
-	std::chrono::duration<double, std::ratio<1, 1>> elapsed_secs = std::chrono::duration_cast<std::chrono::duration<double>>(end - begin);
-
-	cout << 10000 << " random boards solved in "
-		<< elapsed_secs.count() << "seconds"  << "with " << lookups << " lookups" << 
-		" and "<< totalwordcount << " words " << endl;
-	cout << 10000 / elapsed_secs.count() << "bps";
-
 }
 
 
