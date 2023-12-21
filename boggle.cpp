@@ -16,7 +16,7 @@ using namespace std;
 __inline void build_trie(char** trie);
 __inline void add_word(const char* word, char** trie);
 __inline int search_letter(const char letter, char*** index, int*** locscoreloc);
-__inline int words_from(char ** index, int position, int depth, int running_score, int running_multiplier);
+__inline void words_from(char ** index, int position, int depth, int running_score, int running_multiplier);
 __inline void generate();
 __inline void initialise_probability();
 
@@ -130,10 +130,10 @@ char** trie;
 int wordbonus_map[16] = { 2,2,3,1,1,1,1,1,1,1,1,1,1,1,1,1 };
 int letterbonus_map[16] = { 1,1,1,2,2,3,3,1,1,1,1,1,1,1,1,1 };
 int wordcount = 0;
+int valid = false;
 
 
-
-__inline int words_from(char ** index, int position, int depth, int running_score, int running_multiplier) {
+__inline void words_from(char ** index, int position, int depth, int running_score, int running_multiplier) {
 
 	char letter = board[position];
 	running_string[depth] = letter;
@@ -143,11 +143,10 @@ __inline int words_from(char ** index, int position, int depth, int running_scor
 	running_multiplier = running_multiplier * wordbonus_map[position];
 	int finalscore = (running_score * running_multiplier) + depth * 2;
 	int** locscoreloc = (int **)search_letter(letter, &index);
-	int valid;
 
 	if (depth >= 2) {
 		if (!locscoreloc){ //if not a word then locscoreloc contains flag and it is false
-			return 0; 
+			return; 
 		}
 
 		if ((int)locscoreloc >= 2) { //if a valid word then locscoreloc contains true flag or scoreloc
@@ -180,7 +179,6 @@ __inline int words_from(char ** index, int position, int depth, int running_scor
 	}
 
 	board[position] = temp;
-	return valid;
 }
 
 static unsigned int g_seed;
@@ -208,9 +206,11 @@ inline void generate() {
 	
 
 	for (int j = 0; j < 16; j++) {
-		if (!words_from(trie, j, 0, 0, 1)) {
+		words_from(trie, j, 0, 0, 1);
+		if (!valid) {
 			break;
 		}
+		valid = false;
 	}
 
 	for (int j = 0; j < 1600; j++) {
@@ -218,7 +218,7 @@ inline void generate() {
 			break;
 		}
 		*(score_cleanup[j]) = (int*)1; //reset scores to true flags
-		//free(list_words[j]);
+		free(list_words[j]);
 
 	}
 
@@ -285,8 +285,6 @@ int main()
 	//		break;
 	//	}
 	//	cout << " " << list_words[i] << ": " << list_score[i] << " | ";
-
+    //
 	//}
 }
-
-
