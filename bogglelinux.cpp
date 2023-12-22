@@ -150,12 +150,11 @@ __inline void words_from(char ** index, int position, int depth, int running_sco
 
 	char letter = board[position];
 	running_string[depth] = letter;
-	running_string[depth + 1] = '\0';
 	depth++;
 	running_score = running_score + score_map[position] * letterbonus_map[position];
 	running_multiplier = running_multiplier * wordbonus_map[position];
 	int finalscore = (running_score * running_multiplier) + depth * 2;
-	int** locscoreloc = (int **)search_letter(letter, &index);
+	int** locscoreloc = (int **)search_letter(letter, &index); //score is an integer
 
 	if (depth >= 2) {
 		if (!locscoreloc){ //if not a word then locscoreloc contains flag and it is false
@@ -165,7 +164,7 @@ __inline void words_from(char ** index, int position, int depth, int running_sco
 		if ((long)locscoreloc >= 2) { //if a valid word then locscoreloc contains true flag or scoreloc
 			valid = true;  //this letter has at least one valid word
 			if (*locscoreloc == (int*)1) { //if locscoreloc still contains true flag (it means word is valid but not already found)
-				list_words[wordcount] = _strdup(running_string);
+				list_words[wordcount] = _strdup(running_string + '\0');
 				list_score[wordcount] = finalscore;
 				*locscoreloc = &(list_score[wordcount]);
 				score_cleanup[wordcount] = locscoreloc;
@@ -193,18 +192,6 @@ __inline void words_from(char ** index, int position, int depth, int running_sco
 
 	board[position] = temp;
 }
-
-static unsigned int g_seed;
-         
-__inline void fast_srand(int seed) {
-	g_seed = seed;
-}
-
-__inline int fast_rand(void) {
-	g_seed = (214013 * g_seed + 2531011);
-	return (g_seed >> 16) & 0x7FFF;
-}
-
 
 
 inline void generate() {
