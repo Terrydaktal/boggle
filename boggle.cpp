@@ -15,10 +15,11 @@ using namespace std;
 
 __inline void build_trie(char** trie);
 __inline void add_word(const char* word, char** trie);
-__inline int search_letter(const char letter, char*** index, int*** locscoreloc);
+__inline long search_letter(const char letter, char*** index);
 __inline void words_from(char ** index, int position, int depth, int running_score, int running_multiplier);
 __inline void generate();
 __inline void initialise_probability();
+__inline char *strndup(char *str, int chars);
 
 int lookups = 0;
 string letter_sample;
@@ -93,7 +94,7 @@ __inline void add_word(const char* word, char** trie) {
 
 }
 
-__inline int search_letter(const char letter, char*** index) {
+__inline long search_letter(const char letter, char*** index) {
 	int i = 0;
 	char** current = *index;
 	lookups++;
@@ -107,7 +108,7 @@ __inline int search_letter(const char letter, char*** index) {
 	i++;
 
 	if (current[26] != (char*)0) {
-		return (int)&current[26]; //it's a word and returns locscoreloc. scoreloc is just the true flag to indicate
+		return (long)&current[26]; //it's a word and returns locscoreloc. scoreloc is just the true flag to indicate
 									//that it's a word but contains the scoreloc if the word has been found
 	}			
 					//score is score in the list of scores, scoreloc is the location of the score
@@ -137,22 +138,21 @@ __inline void words_from(char ** index, int position, int depth, int running_sco
 
 	char letter = board[position];
 	running_string[depth] = letter;
-	running_string[depth + 1] = '\0';
 	depth++;
 	running_score = running_score + score_map[position] * letterbonus_map[position];
 	running_multiplier = running_multiplier * wordbonus_map[position];
 	int finalscore = (running_score * running_multiplier) + depth * 2;
-	int** locscoreloc = (int **)search_letter(letter, &index);
+	int** locscoreloc = (int **)search_letter(letter, &index); //score is an integer
 
 	if (depth >= 2) {
 		if (!locscoreloc){ //if not a word then locscoreloc contains flag and it is false
 			return; 
 		}
 
-		if ((int)locscoreloc >= 2) { //if a valid word then locscoreloc contains true flag or scoreloc
+		if ((long)locscoreloc >= 2) { //if a valid word then locscoreloc contains true flag or scoreloc
 			valid = true;  //this letter has at least one valid word
 			if (*locscoreloc == (int*)1) { //if locscoreloc still contains true flag (it means word is valid but not already found)
-				list_words[wordcount] = _strdup(running_string);
+				list_words[wordcount] = strndup(running_string, depth);
 				list_score[wordcount] = finalscore;
 				*locscoreloc = &(list_score[wordcount]);
 				score_cleanup[wordcount] = locscoreloc;
@@ -241,6 +241,21 @@ void threaded_generate (){
 			}
 			wordcount = 0;
 		}
+}
+
+__inline char *strndup(char *str, int chars)
+{
+	char *buffer;
+	int n;
+
+	buffer = (char *)malloc(chars + 1);
+	if (buffer)
+	{
+		for (n = 0; ((n < chars) && (str[n] != 0)); n++) buffer[n] = str[n];
+		buffer[n] = 0;
+	}
+
+	return buffer;
 }
 
 int main()
