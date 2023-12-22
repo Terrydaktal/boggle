@@ -17,7 +17,7 @@ __inline long search_letter(const char letter, char*** index);
 __inline void words_from(char ** index, int position, int depth, int running_score, int running_multiplier);
 __inline void generate();
 __inline void initialise_probability();
-__inline char *strndup(char *str, int chars)
+__inline char *strndup(char *str, int chars);
 
 int lookups = 0;
 string letter_sample;
