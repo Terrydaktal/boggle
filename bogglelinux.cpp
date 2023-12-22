@@ -179,6 +179,16 @@ __inline void words_from(char ** index, int position, int depth, int running_sco
 	board[position] = temp;
 }
 
+static unsigned int g_seed;
+         
+__inline void fast_srand(int seed) {
+	g_seed = seed;
+}
+
+__inline int fast_rand(void) {
+	g_seed = (214013 * g_seed + 2531011);
+	return (g_seed >> 16) & 0x7FFF;
+}
 
 __inline void generate() {
 
