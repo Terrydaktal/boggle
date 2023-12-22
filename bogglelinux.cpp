@@ -9,21 +9,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-char* _strdup (const char* s)
-{
-  size_t slen = strlen(s);
-  char* result = (char*)malloc(slen + 1);
-  if(result == NULL)
-  {
-    return NULL;
-  }
-
-  memcpy(result, s, slen+1);
-  return result;
-}
-
-
-
 using namespace std;
 
 __inline void build_trie(char** trie);
@@ -32,6 +17,7 @@ __inline long search_letter(const char letter, char*** index);
 __inline void words_from(char ** index, int position, int depth, int running_score, int running_multiplier);
 __inline void generate();
 __inline void initialise_probability();
+__inline char *strndup(char *str, int chars)
 
 int lookups = 0;
 string letter_sample;
@@ -136,7 +122,7 @@ char* list_words[1600] = { 0 };
 int list_score[1600] = { 0 };
 int** score_cleanup[1600] = { 0 };
 int score_map[16];
-char running_string[16 + 1] = { 0 };  //initalise first to 0, rest made 0 because not specified
+char running_string[16] = { 0 };  //initalise first to 0, rest made 0 because not specified
 char board[17];
 int numboards = 10000;
 char** trie;
@@ -164,7 +150,7 @@ __inline void words_from(char ** index, int position, int depth, int running_sco
 		if ((long)locscoreloc >= 2) { //if a valid word then locscoreloc contains true flag or scoreloc
 			valid = true;  //this letter has at least one valid word
 			if (*locscoreloc == (int*)1) { //if locscoreloc still contains true flag (it means word is valid but not already found)
-				list_words[wordcount] = _strdup(running_string + '\0');
+				list_words[wordcount] = strndup(running_string, depth);
 				list_score[wordcount] = finalscore;
 				*locscoreloc = &(list_score[wordcount]);
 				score_cleanup[wordcount] = locscoreloc;
@@ -194,7 +180,7 @@ __inline void words_from(char ** index, int position, int depth, int running_sco
 }
 
 
-inline void generate() {
+__inline void generate() {
 
 	for (int j = 0; j < 16; j++) {
 		board[j] = letter_sample[fast_rand() % 2350];
@@ -241,6 +227,21 @@ void threaded_generate (){
 			}
 			wordcount = 0;
 		}
+}
+
+__inline char *strndup(char *str, int chars)
+{
+	char *buffer;
+	int n;
+
+	buffer = (char *)malloc(chars + 1);
+	if (buffer)
+	{
+		for (n = 0; ((n < chars) && (str[n] != 0)); n++) buffer[n] = str[n];
+		buffer[n] = 0;
+	}
+
+	return buffer;
 }
 
 int main()
