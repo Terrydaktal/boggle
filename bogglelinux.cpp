@@ -28,7 +28,7 @@ using namespace std;
 
 __inline void build_trie(char** trie);
 __inline void add_word(const char* word, char** trie);
-__inline int search_letter(const char letter, char*** index, int*** locscoreloc);
+__inline long search_letter(const char letter, char*** index;
 __inline void words_from(char ** index, int position, int depth, int running_score, int running_multiplier);
 __inline void generate();
 __inline void initialise_probability();
@@ -106,7 +106,7 @@ __inline void add_word(const char* word, char** trie) {
 
 }
 
-__inline int search_letter(const char letter, char*** index) {
+__inline long search_letter(const char letter, char*** index) {
 	int i = 0;
 	char** current = *index;
 	lookups++;
