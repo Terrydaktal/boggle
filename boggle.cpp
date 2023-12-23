@@ -120,14 +120,12 @@ __inline long search_letter(const char letter, char*** index) {
 
 }
 
-int totalwordcount = 0;
-char* _list_words[1600] = { 0 };
-int _list_scores[1600] = { 0 };
-int** score_cleanup[1600] = { 0 };
+char* _list_words[1600];
+int _list_scores[1600];
+int** score_cleanup[1600];
 int score_map[16];
-char running_string[16] = { 0 };  //initalise first to 0, rest made 0 because not specified
-char _board[16];
-int numboards = 1;
+char running_string[16];  //initalise first to 0, rest made 0 because not specified
+char _board[17];
 char** trie;
 
 int wordbonus[3][16] = { { 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 },
@@ -204,62 +202,56 @@ int totalscore = 0;
 
 __inline void generate(int round, char* board, int* letterbonusmap, int* wordbonusmap, int* wordcount, int* list_scores, char** list_words) {
 
-	for (int j = 0; j < 16; j++) {
-		board[j] = letter_sample[fast_rand() % 2350];
-		score_map[j] = letter_scores[int(board[j]) - 97 + 32];
+	while (_wordcount < 95) {
+		_wordcount = 0;
+		for (int j = 0; j < 16; j++) {
+			_board[j] = letter_sample[fast_rand() % 2350];
+			score_map[j] = letter_scores[int(_board[j]) - 97 + 32];
 
-	}
-
-	random_shuffle(begin(wordbonus[round]), end(wordbonus[round]));
-	_wordbonusmap = wordbonus[round];
-
-	random_shuffle(begin(letterbonus[round]), end(letterbonus[round]));
-	_letterbonusmap = letterbonus[round];
-
-	//board[16] = '\0';
-	//cout << board << " ";
-	
-
-	for (int j = 0; j < 16; j++) {
-		words_from(trie, j, 0, 0, 1);
-		if (!valid) {
-			break;
 		}
-		valid = false;
-	}
 
-	for (int j = 0; j < 1600; j++) {
-		if (!_list_scores[j]) {
-			break;
-		}
-		totalscore += _list_scores[j];
-		*(score_cleanup[j]) = (int*)1; //reset scores to true flags
-		free(list_words[j]);
-	}
+		random_shuffle(begin(wordbonus[round]), end(wordbonus[round]));
+		_wordbonusmap = wordbonus[round];
 
+		random_shuffle(begin(letterbonus[round]), end(letterbonus[round]));
+		_letterbonusmap = letterbonus[round];
 
-	memcpy(board, _board, _wordcount * sizeof(void*));
-	memcpy(letterbonusmap, _letterbonusmap, _wordcount * sizeof(void*));
-	memcpy(wordbonusmap, _wordbonusmap, _wordcount * sizeof(void*));
-	memcpy(list_scores, _list_scores, _wordcount * sizeof(void*));
-	//memset(_list_scores, 0, _wordcount * sizeof(void*));
-	memcpy(list_words, _list_words, _wordcount * sizeof(void*));
-	//memset(_list_words, 0, _wordcount * sizeof(void*));
-	//memset(score_cleanup, 0, _wordcount * sizeof(void*));
-	*wordcount = _wordcount;
-	totalwordcount += _wordcount;
-}
-
-void threaded_generate (){
-
-		for (int i = 0; i < numboards; i++) {
-			//generate();
-			while (_wordcount < 95) {
-				_wordcount = 0;
+		for (int j = 0; j < 16; j++) {
+			words_from(trie, j, 0, 0, 1);
+			if (!valid) {
+				break;
 			}
-			_wordcount = 0;
+			valid = false;
 		}
+
+		for (int j = 0; j < _wordcount; j++) {
+			*(score_cleanup[j]) = (int*)1; //reset scores to true flags
+			//free(_list_words[j]);
+		}
+		
+	}
+
+	memcpy(board, _board, 16 * sizeof(char));
+	memcpy(letterbonusmap, _letterbonusmap, 16 * sizeof(int));
+	memcpy(wordbonusmap, _wordbonusmap, 16 * sizeof(int));
+	memcpy(list_scores, _list_scores, _wordcount * sizeof(int));
+	memcpy(list_words, _list_words, _wordcount * sizeof(char*));
+
+	*wordcount = _wordcount;
+	_wordcount = 0;
+
 }
+
+//void threaded_generate (){
+//
+	//	for (int i = 0; i < numboards; i++) {
+//			//generate();
+//		while (_wordcount < 95) {
+	//			_wordcount = 0;
+	//		}
+	//		_wordcount = 0;
+//		}
+//}
 
 __inline char *strndup(char *str, int chars)
 {
@@ -290,40 +282,24 @@ int main()
 	int letterbonusmap[16];
 	int wordcount = 0;
 	char board[16];
-	char* list_words[1600] = { 0 };
-	int list_scores[1600] = { 0 };
+	char* list_words[1600];
+	int list_scores[1600];
 	int round = 1;
-
 	typedef std::chrono::high_resolution_clock Clock;
 	auto begin = Clock::now();
+	int numboards = 10000;
+	int totalwordcount = 0;
 
 	//thread t(&threaded_generate);
 	//thread t2(&threaded_generate);
-	for (int i = 0; i < numboards; i++) {
-		while (_wordcount < 95) {
-			_wordcount = 0;
-			totalscore = 0;
-			generate(round, board, letterbonusmap, wordbonusmap, &wordcount, list_scores, list_words);
-		}
-		cout << board<< " " << wordcount << " words " << endl;
-		//cout << totalwordcount << " words"
 
-	for (int i = 0; i < totalwordcount; i++) {
-		if (list_scores[i] == 0) {
-			break;
-		}
-		cout << " " << list_words[i] << ": " << list_scores[i] << " | ";
- 
-		}
-			_wordcount = 0;
-			totalscore = 0;
-		
-		}
+	for (int i = 0; i < numboards; i++) {
+		generate(round, board, letterbonusmap, wordbonusmap, &wordcount, list_scores, list_words);
+		totalwordcount += wordcount;
+	}
+
 	//t.join();
 	//t2.join();
-
-
-	
 	auto end = Clock::now();
 
 	
@@ -331,7 +307,13 @@ int main()
 	cout << numboards << " random boards solved in "
 		<< elapsed_secs.count() << "seconds"  << "with " << lookups << " lookups" <<
 		" and "<< totalwordcount << " words " << endl;
-	cout << numboards / elapsed_secs.count() << "bps" << " total score : ";
+	cout << numboards / elapsed_secs.count() << "bps";
+
+	cout << wordcount << " words " << endl;
+	//cout << totalwordcount << " words"
+	for (int i = 0; i < wordcount; i++) {
+		cout << " " << list_words[i] << ": " << list_scores[i] << " | ";
+	}
 
 }
 
