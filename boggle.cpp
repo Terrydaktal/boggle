@@ -221,12 +221,6 @@ __inline void generate(int round, char* board, int* letterbonusmap, int* wordbon
 			continue;
 		}
 
-		random_shuffle(begin(wordbonus[round]), end(wordbonus[round]));
-		_wordbonusmap = wordbonus[round];
-
-		random_shuffle(begin(letterbonus[round]), end(letterbonus[round]));
-		_letterbonusmap = letterbonus[round];
-
 		quickpass = true;
 		for (int j = 0; j < 16; j++) {
 			valid = false;
@@ -235,6 +229,12 @@ __inline void generate(int round, char* board, int* letterbonusmap, int* wordbon
 				continue;
 			}
 		}
+
+		random_shuffle(begin(wordbonus[round]), end(wordbonus[round]));
+		_wordbonusmap = wordbonus[round];
+
+		random_shuffle(begin(letterbonus[round]), end(letterbonus[round]));
+		_letterbonusmap = letterbonus[round];
 
 		quickpass = false;
 		for (int j = 0; j < 16; j++) {
@@ -331,3 +331,5 @@ int main()
 	}
 
 }
+
+
