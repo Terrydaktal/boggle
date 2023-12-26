@@ -31,12 +31,14 @@ int main() {
 		exit(EXIT_FAILURE);
 	}
 
+
+  std::cout << "listening " << errno << std::endl;
   // Start listening. Hold at most 10 connections in the queue
   if (listen(sockfd, 10) < 0) {
     std::cout << "Failed to listen on socket. errno: " << errno << std::endl;
     exit(EXIT_FAILURE);
   }
-
+  std::cout << "done " << errno << std::endl;
   // Grab a connection from the queue
   auto addrlen = sizeof(sockaddr);
   int connection = accept(sockfd, (struct sockaddr*)&sockaddr, (socklen_t*)&addrlen);
