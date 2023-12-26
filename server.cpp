@@ -41,7 +41,8 @@ int main() {
   std::cout << "done " << errno << std::endl;
   // Grab a connection from the queue
   auto addrlen = sizeof(sockaddr);
-  while ((int connection = accept(sockfd, (struct sockaddr*)&sockaddr, (socklen_t*)&addrlen)) >= 0){
+  int connection = 0;
+  while ((connection = accept(sockfd, (struct sockaddr*)&sockaddr, (socklen_t*)&addrlen)) >= 0){
 	  if (connection < 0) {
 	    std::cout << "Failed to grab connection. errno: " << errno << std::endl;
 	    exit(EXIT_FAILURE);
