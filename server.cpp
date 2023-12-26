@@ -23,6 +23,8 @@ int main() {
     //listen to all destination addresses on the incoming packet and on port 9999
    //it sets _our_ address , and all packets destined to to it will be accepted
 	//and all packets sent from us will have this address and port
+	//effectively it means that it accepts all communications to port 9999 regardless of address
+	//and sends all packets from the appropriate outgoing address and port 9999
 
 	if (bind(sockfd, (struct sockaddr*)&sockaddr, sizeof(sockaddr)) < 0) {
 		std::cout << "Failed to bind to port 9999. errno: " << errno << std::endl;
