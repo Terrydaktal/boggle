@@ -16,7 +16,7 @@ int main() {
   sockaddr_in sockaddr;
   sockaddr.sin_family = AF_INET;
   sockaddr.sin_addr.s_addr = INADDR_ANY;
-  sockaddr.sin_port = htons(9999); // htons is necessary to convert a number to
+  sockaddr.sin_port = htons(80); // htons is necessary to convert a number to
                                    // network byte order
 
   
