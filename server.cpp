@@ -1,92 +1,62 @@
-/* The port number is passed as an argument */
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h> 
-#include <sys/socket.h>
-#include <netinet/in.h>
+#include <sys/socket.h> // For socket functions
+#include <netinet/in.h> // For sockaddr_in
+#include <cstdlib> // For exit() and EXIT_FAILURE
+#include <iostream> // For cout
+#include <unistd.h> // For read
 
-void error(const char *msg)
-{
-    perror(msg);
-    exit(1);
-}
+int main() {
+  // Create a socket (IPv4, TCP)
+  int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+  if (sockfd == -1) {
+    std::cout << "Failed to create socket. errno: " << errno << std::endl;
+    exit(EXIT_FAILURE);
+  }
 
-int main(int argc, char *argv[])
-{
-     int sockfd, newsockfd, portno;
-     socklen_t clilen;
-     char buffer[256];
-     struct sockaddr_in serv_addr, cli_addr;
-     int n;
-     if (argc < 2) {
-         fprintf(stderr,"ERROR, no port provided\n");
-         exit(1);
-     }
-     // create a socket
-     // socket(int domain, int type, int protocol)
-     sockfd =  socket(AF_INET, SOCK_STREAM, 0);
-     if (sockfd < 0) 
-        error("ERROR opening socket");
+  // Listen to port 9999 on any address
+  sockaddr_in sockaddr;
+  sockaddr.sin_family = AF_INET;
+  sockaddr.sin_addr.s_addr = INADDR_ANY;
+  sockaddr.sin_port = htons(9999); // htons is necessary to convert a number to
+                                   // network byte order
 
-     // clear address structure
-     bzero((char *) &serv;_addr, sizeof(serv_addr));
+  
+    //listen to all destination addresses on the incoming packet and on port 9999
+   //it sets _our_ address , and all packets destined to to it will be accepted
+	//and all packets sent from us will have this address and port
+	//effectively it means that it accepts all communications to port 9999 regardless of address
+	//and sends all packets from the appropriate outgoing address and port 9999
 
-     portno = atoi(argv[1]);
-
-     /* setup the host_addr structure for use in bind call */
-     // server byte order
-     serv_addr.sin_family = AF_INET;  
-
-     // automatically be filled with current host's IP address
-     serv_addr.sin_addr.s_addr = INADDR_ANY;  
-
-     // convert short integer value for port must be converted into network byte order
-     serv_addr.sin_port = htons(portno);
-
-     // bind(int fd, struct sockaddr *local_addr, socklen_t addr_length)
-     // bind() passes file descriptor, the address structure, 
-     // and the length of the address structure
-     // This bind() call will bind  the socket to the current IP address on port, portno
-     if (bind(sockfd, (struct sockaddr *) &serv;_addr,
-              sizeof(serv_addr)) < 0) 
-              error("ERROR on binding");
-
-     // This listen() call tells the socket to listen to the incoming connections.
-     // The listen() function places all incoming connection into a backlog queue
-     // until accept() call accepts the connection.
-     // Here, we set the maximum size for the backlog queue to 5.
-     listen(sockfd,5);
-
-     // The accept() call actually accepts an incoming connection
-     clilen = sizeof(cli_addr);
-
-     // This accept() function will write the connecting client's address info 
-     // into the the address structure and the size of that structure is clilen.
-     // The accept() returns a new socket file descriptor for the accepted connection.
-     // So, the original socket file descriptor can continue to be used 
-     // for accepting new connections while the new socker file descriptor is used for
-     // communicating with the connected client.
-     newsockfd = accept(sockfd, 
-                 (struct sockaddr *) &cli;_addr, &clilen;);
-     if (newsockfd < 0) 
-          error("ERROR on accept");
-
-     printf("server: got connection from %s port %d\n",
-            inet_ntoa(cli_addr.sin_addr), ntohs(cli_addr.sin_port));
+	if (bind(sockfd, (struct sockaddr*)&sockaddr, sizeof(sockaddr)) < 0) {
+		std::cout << "Failed to bind to port 9999. errno: " << errno << std::endl;
+		exit(EXIT_FAILURE);
+	}
 
 
-     // This send() function sends the 13 bytes of the string to the new socket
-     send(newsockfd, "Hello, world!\n", 13, 0);
+  std::cout << "listening " << errno << std::endl;
+  // Start listening. Hold at most 10 connections in the queue
+  if (listen(sockfd, 10) < 0) {
+    std::cout << "Failed to listen on socket. errno: " << errno << std::endl;
+    exit(EXIT_FAILURE);
+  }
+  std::cout << "done " << errno << std::endl;
+  // Grab a connection from the queue
+  auto addrlen = sizeof(sockaddr);
+  int connection = accept(sockfd, (struct sockaddr*)&sockaddr, (socklen_t*)&addrlen);
+  if (connection < 0) {
+    std::cout << "Failed to grab connection. errno: " << errno << std::endl;
+    exit(EXIT_FAILURE);
+  }
 
-     bzero(buffer,256);
+  // Read from the connection
+  char buffer[100];
+  auto bytesRead = read(connection, buffer, 100);
+  std::cout << "The message was: " << buffer;
 
-     n = read(newsockfd,buffer,255);
-     if (n < 0) error("ERROR reading from socket");
-     printf("Here is the message: %s\n",buffer);
+  // Send a message to the connection
+  std::string response = "Good talking to you\n";
+  send(connection, response.c_str(), response.size(), 0);
 
-     close(newsockfd);
-     close(sockfd);
-     return 0; 
+  // Close the connections
+  close(connection);
+  close(sockfd);
 }
