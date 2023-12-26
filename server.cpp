@@ -41,17 +41,17 @@ int main() {
   std::cout << "done " << errno << std::endl;
   // Grab a connection from the queue
   auto addrlen = sizeof(sockaddr);
-  int connection = accept(sockfd, (struct sockaddr*)&sockaddr, (socklen_t*)&addrlen);
-  if (connection < 0) {
-    std::cout << "Failed to grab connection. errno: " << errno << std::endl;
-    exit(EXIT_FAILURE);
+  while ((int connection = accept(sockfd, (struct sockaddr*)&sockaddr, (socklen_t*)&addrlen)) >= 0){
+	  if (connection < 0) {
+	    std::cout << "Failed to grab connection. errno: " << errno << std::endl;
+	    exit(EXIT_FAILURE);
+	  }
+	
+	  // Read from the connection
+	  char buffer[100];
+	  auto bytesRead = read(connection, buffer, 100);
+	  std::cout << "The message was: " << buffer;
   }
-
-  // Read from the connection
-  char buffer[100];
-  auto bytesRead = read(connection, buffer, 100);
-  std::cout << "The message was: " << buffer;
-
   // Send a message to the connection
   std::string response = "Good talking to you\n";
   send(connection, response.c_str(), response.size(), 0);
