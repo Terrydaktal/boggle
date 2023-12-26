@@ -136,7 +136,7 @@ int letterbonus[3][16] = {{ 3,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1 },
 int* _letterbonusmap;
 int _wordcount = 0;
 int valid = false;
-
+int quickpass = false;
 
 __inline void words_from(char ** index, int position, int depth, int running_score, int running_multiplier) {
 
@@ -155,6 +155,7 @@ __inline void words_from(char ** index, int position, int depth, int running_sco
 
 		if ((long)locscoreloc >= 2) { //if a valid word then locscoreloc contains true flag or scoreloc
 			valid = true;  //this letter has at least one valid word
+			if (quickpass) { return; }
 			if (*locscoreloc == (int*)1) { //if locscoreloc still contains true flag (it means word is valid but not already found)
 				_list_words[_wordcount] = strndup(running_string, depth); //length omits need for null character; strndup inserts it for us
 				_list_scores[_wordcount] = finalscore;
@@ -171,6 +172,8 @@ __inline void words_from(char ** index, int position, int depth, int running_sco
 
 		}
 	}
+
+	
 	char temp = _board[position];
 	_board[position] = '-';
 
@@ -178,11 +181,13 @@ __inline void words_from(char ** index, int position, int depth, int running_sco
 		if (move == -1) { break; }
 		if (_board[move] != '-') {
 			words_from (index, move, depth, running_score, running_multiplier);
+			if (quickpass && valid) { break; }
 		}
 
 	}
-
+	
 	_board[position] = temp;
+	if (quickpass && valid) { return; }
 }
 
 static unsigned int g_seed;
@@ -200,12 +205,27 @@ int totalscore = 0;
 
 __inline void generate(int round, char* board, int* letterbonusmap, int* wordbonusmap, int* wordcount, int* list_scores, char** list_words) {
 
-	while (_wordcount < 95) {
+	while (_wordcount < 90) {
 		_wordcount = 0;
+		int vowels = 0;
 		for (int j = 0; j < 16; j++) {
-			_board[j] = letter_sample[fast_rand() % 2350];
+			if ((0x208222 >> ((_board[j] = letter_sample[fast_rand() % 2350]) & 0x1f)) & 1) {
+				vowels++;
+			}
 			score_map[j] = letter_scores[int(_board[j]) - 97 + 32];
+		}
 
+		if (vowels < 3 || vowels > 12) {
+			continue;
+		}
+
+		quickpass = true;
+		for (int j = 0; j < 16; j++) {
+			valid = false;
+			words_from(trie, j, 0, 0, 1);
+			if (!valid) {
+				continue;
+			}
 		}
 
 		random_shuffle(begin(wordbonus[round]), end(wordbonus[round]));
@@ -214,19 +234,14 @@ __inline void generate(int round, char* board, int* letterbonusmap, int* wordbon
 		random_shuffle(begin(letterbonus[round]), end(letterbonus[round]));
 		_letterbonusmap = letterbonus[round];
 
+		quickpass = false;
 		for (int j = 0; j < 16; j++) {
-			words_from(trie, j, 0, 0, 1);
-			if (!valid) {
-				break;
+				words_from(trie, j, 0, 0, 1);
 			}
-			valid = false;
-		}
 
 		for (int j = 0; j < _wordcount; j++) {
-			*(score_cleanup[j]) = (int*)1; //reset scores to true flags
-			//free(_list_words[j]);
-		}
-		
+			*(score_cleanup[j]) = (int*)1;
+			}
 	}
 
 	memcpy(board, _board, 16 * sizeof(char));
