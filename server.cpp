@@ -52,10 +52,9 @@ int main() {
 	  char buffer[100];
 	  auto bytesRead = read(connection, buffer, 100);
 	  std::cout << "The message was: " << buffer;
+	  std::string response = "Good talking to you\n";
+	  send(connection, response.c_str(), response.size(), 0);
   }
-  // Send a message to the connection
-  std::string response = "Good talking to you\n";
-  send(connection, response.c_str(), response.size(), 0);
 
   // Close the connections
   close(connection);
