@@ -5,7 +5,7 @@
 #include <sstream>
 #include <vector>
 #include <unistd.h> // For read
-#include <mysql.h>
+#include <mysql/mysql.h>
 
 using namespace std;
 
