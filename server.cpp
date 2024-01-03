@@ -15,12 +15,17 @@ const char *dbserver = "localhost";
 const char *dbusername = "lewis";
 const char *dbpassword = "password";
 const char *dbdatabase = "wordelites";
-MYSQL mysql, *conn;
-MYSQL_RES *res;
-MYSQL_ROW row;
 
 
-int signup(vector<string> v) {
+
+int signup(vector<string> v, sockaddr_in* sockaddr) {
+
+	MYSQL mysql, *conn;
+	MYSQL_RES *res;
+	MYSQL_ROW row;
+	std::string query;
+	int query_state;
+
 	
 	conn = mysql_real_connect(&mysql, dbserver, dbusername, dbpassword, dbdatabase, 0, 0, 0);
 	if (conn == NULL)
@@ -31,10 +36,10 @@ int signup(vector<string> v) {
 
 	string username = v[1];
 	string password = v[2];
-	string apostrophe = "'";
 
-	std::string query = "SELECT * FROM users WHERE username = '" + username + apostrophe;
-	int query_state = mysql_query(conn, query.c_str());
+	query = "SELECT * FROM users WHERE username = '" + username + "'";
+	query_state = mysql_query(conn, query.c_str());
+
 	if (query_state != 0)
 	{
 		cout << mysql_error(conn) << endl << endl;
@@ -42,13 +47,24 @@ int signup(vector<string> v) {
 	}
 	res = mysql_store_result(conn);
 
-	while ((row = mysql_fetch_row(res)) != NULL)
+	if ((row = mysql_fetch_row(res)) == NULL)
 	{
-		cout << left;
-		cout << setw(18) << row[0]
-			<< setw(18) << row[1]
-			<< setw(18) << row[2]
-			<< setw(18) << row[3] << endl;
+		query = "INSERT INTO users (username, rating, nickname, lastip, lastonline, password) VALUES ('" + username + "', 100, '', '" + sockaddr->sin_addr.s_addr + "', 0, '" + password + "')";
+		query_state = mysql_query(conn, query.c_str());
+
+		if (query_state != 0)
+		{
+			cout << mysql_error(conn) << endl << endl;
+			return 1;
+		}
+		//cout << left;
+		//cout << setw(18) << row[0]
+		//	<< setw(18) << row[1]
+		//	<< setw(18) << row[2]
+		//	<< setw(18) << row[3]
+		//	<< setw(18) << row[4]
+		//	<< setw(18) << row[5]
+		//	<< setw(18) << row[6] << endl;
 	}
 
 	mysql_free_result(res);
@@ -124,7 +140,7 @@ int main() {
 			for (size_t i = 0; i < v.size(); i++)
 				cout << v[i] << endl;
 
-			signup(v);
+			signup(v, (sockaddr_in*)&sockaddr);
 		}
 
 		std::string response = "Good talking to you\n";
