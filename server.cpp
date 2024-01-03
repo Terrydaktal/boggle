@@ -31,8 +31,9 @@ int signup(vector<string> v) {
 
 	string username = v[1];
 	string password = v[2];
+	string apostrophe = "'";
 
-	std::string query = "SELECT * FROM users WHERE username =" + username;
+	std::string query = "SELECT * FROM users WHERE username = '" + username + apostrophe;
 	int query_state = mysql_query(conn, query.c_str());
 	if (query_state != 0)
 	{
