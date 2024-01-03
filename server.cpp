@@ -37,6 +37,7 @@ int signup(vector<string> v, sockaddr_in* sockaddr) {
 
 	string username = v[1];
 	string password = v[2];
+	string ip = to_string(sockaddr->sin_addr.s_addr)
 
 	query = "SELECT * FROM users WHERE username = '" + username + "'";
 	query_state = mysql_query(conn, query.c_str());
@@ -50,7 +51,7 @@ int signup(vector<string> v, sockaddr_in* sockaddr) {
 
 	if ((row = mysql_fetch_row(res)) == NULL)
 	{
-		query = "INSERT INTO users (username, rating, nickname, lastip, lastonline, password) VALUES ('" + username + "', 100, '', '" + sockaddr->sin_addr.s_addr + "', 0, '" + password + "')";
+		query = "INSERT INTO users (username, rating, nickname, lastip, lastonline, password) VALUES ('" + username + "', 100, '', '" + ip + "', 0, '" + password + "')";
 		query_state = mysql_query(conn, query.c_str());
 
 		if (query_state != 0)
