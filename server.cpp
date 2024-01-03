@@ -16,13 +16,14 @@ const char *dbusername = "lewis";
 const char *dbpassword = "password";
 const char *dbdatabase = "wordelites";
 
+MYSQL mysql, *conn;
+MYSQL_RES *res;
+MYSQL_ROW row;
 
 
 int signup(vector<string> v, sockaddr_in* sockaddr) {
 
-	MYSQL mysql, *conn;
-	MYSQL_RES *res;
-	MYSQL_ROW row;
+	
 	std::string query;
 	int query_state;
 
