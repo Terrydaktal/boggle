@@ -37,7 +37,7 @@ int signup(vector<string> v, sockaddr_in* sockaddr) {
 
 	string username = v[1];
 	string password = v[2];
-	string ip = to_string(sockaddr->sin_addr.s_addr)
+	string ip = to_string(sockaddr->sin_addr.s_addr);
 
 	query = "SELECT * FROM users WHERE username = '" + username + "'";
 	query_state = mysql_query(conn, query.c_str());
