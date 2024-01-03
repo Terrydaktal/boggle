@@ -80,7 +80,7 @@ int main() {
 	  //and sends all packets from the appropriate outgoing address and port 9999
 
 	if (bind(sockfd, (struct sockaddr*)&sockaddr, sizeof(sockaddr)) < 0) {
-		std::cout << "Failed to bind to port 9999. errno: " << errno << std::endl;
+		std::cout << "Failed to bind to port 80. errno: " << errno << std::endl;
 		exit(EXIT_FAILURE);
 	}
 
@@ -118,10 +118,11 @@ int main() {
 			v.push_back(substr);
 		}
 
-		for (size_t i = 0; i < v.size(); i++)
-			cout << v[i] << endl;
 
-		if (memcmp(buffer, "signup", 6)) {
+		if (memcmp(buffer, "signup", 6) == 0) {
+			for (size_t i = 0; i < v.size(); i++)
+				cout << v[i] << endl;
+
 			signup(v);
 		}
 
