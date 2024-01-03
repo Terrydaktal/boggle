@@ -32,7 +32,7 @@ int signup(vector<string> v) {
 	string username = v[1];
 	string password = v[2];
 
-	std::string query = "SELECT * FROM users WHERE username =" + username + password;
+	std::string query = "SELECT * FROM users WHERE username =" + username;
 	int query_state = mysql_query(conn, query.c_str());
 	if (query_state != 0)
 	{
@@ -105,7 +105,7 @@ int main() {
 		char buffer[100];
 		auto bytesRead = read(connection, buffer, 100);
 		
-		std::cout << "The message was: " << buffer;
+		std::cout << "The message was: " << buffer << endl;
 
 		string str(buffer);
 		vector<string> v;
