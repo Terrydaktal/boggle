@@ -6,6 +6,8 @@
 #include <vector>
 #include <unistd.h> // For read
 #include <mysql.h>
+#include <cstring>
+#include <iomanip>
 
 using namespace std;
 
@@ -14,10 +16,12 @@ const char *dbusername = "lewis";
 const char *dbpassword = "password";
 const char *dbdatabase = "wordelites";
 MYSQL mysql, *conn;
+MYSQL_RES *res;
+MYSQL_ROW row;
 
 
 int signup(vector<string> v) {
-	MYSQL_RES *res;
+	
 	conn = mysql_real_connect(&mysql, dbserver, dbusername, dbpassword, dbdatabase, 0, 0, 0);
 	if (conn == NULL)
 	{
@@ -28,9 +32,8 @@ int signup(vector<string> v) {
 	string username = v[1];
 	string password = v[2];
 
-	std::string username;
 	std::string query = "SELECT * FROM users WHERE username =" + username + password;
-	query_state = mysql_query(conn, query);
+	int query_state = mysql_query(conn, query.c_str());
 	if (query_state != 0)
 	{
 		cout << mysql_error(conn) << endl << endl;
