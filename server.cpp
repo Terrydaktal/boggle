@@ -8,6 +8,8 @@
 #include <mariadb/mysql.h>
 #include <cstring>
 #include <iomanip>
+#include <thread>
+#include <ctpl_stl.h>
 
 using namespace std;
 
@@ -71,6 +73,59 @@ int signup(vector<string> v, sockaddr_in* sockaddr) {
 
 	mysql_free_result(res);
 	mysql_close(conn);
+
+}
+
+constexpr unsigned int hashs(const char *s, int off = 0) {
+	return !s[off] ? 5381 : (hashs(s, off + 1) * 33) ^ s[off];
+}
+
+void handler(int connection, sockaddr_in sockaddr) {
+	// Read from the connection
+	char buffer[100];
+	auto bytesRead = read(connection, buffer, 100);
+
+	std::cout << "The message was: " << buffer << endl;
+
+	string str(buffer);
+	vector<string> v;
+
+	stringstream ss(str);
+
+	if (memcmp(buffer, "we", 2) == 0) {
+		while (ss.good()) {
+			string substr;
+			getline(ss, substr, ',');
+			v.push_back(substr);
+		}
+
+
+		switch(hashs(v[0].c_str())) {
+
+		case hashs("wesignup"):
+			for (size_t i = 0; i < v.size(); i++){
+				cout << v[i] << endl;
+			}
+				
+			signup(v, (sockaddr_in*)&sockaddr);
+
+
+		case hashs("wesubscribeevents"):
+			for (size_t i = 0; i < v.size(); i++) {
+				cout << v[i] << endl;
+			}
+
+			signup(v, (sockaddr_in*)&sockaddr);
+
+		}
+
+		std::string response = "Good talking to you\n";
+		send(connection, response.c_str(), response.size(), 0);
+		
+	}
+
+	close(connection);
+
 }
 
 int main() {
@@ -114,42 +169,24 @@ int main() {
 	// Grab a connection from the queue
 	auto addrlen = sizeof(sockaddr);
 	int connection = 0;
+
+	ctpl::thread_pool pool(100);  //create threads once and use them again instead of creating new throwaway (detach) threads for every request
+
 	while ((connection = accept(sockfd, (struct sockaddr*)&sockaddr, (socklen_t*)&addrlen)) >= 0) {
 		if (connection < 0) {
 			std::cout << "Failed to grab connection. errno: " << errno << std::endl;
 			exit(EXIT_FAILURE);
 		}
 
-		// Read from the connection
-		char buffer[100];
-		auto bytesRead = read(connection, buffer, 100);
+		pool.push(handler, connection, sockaddr);
+
+
 		
-		std::cout << "The message was: " << buffer << endl;
-
-		string str(buffer);
-		vector<string> v;
-
-		stringstream ss(str);
-
-		while (ss.good()) {
-			string substr;
-			getline(ss, substr, ',');
-			v.push_back(substr);
-		}
-
-
-		if (memcmp(buffer, "signup", 6) == 0) {
-			for (size_t i = 0; i < v.size(); i++)
-				cout << v[i] << endl;
-
-			signup(v, (sockaddr_in*)&sockaddr);
-		}
-
-		std::string response = "Good talking to you\n";
-		send(connection, response.c_str(), response.size(), 0);
 	}
 
 	// Close the connections
-	close(connection);
+
+
+	//close socket
 	close(sockfd);
 }
