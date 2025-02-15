@@ -306,8 +306,7 @@ int main()
 	int list_scores[1600];
 	int round = 1;
 	typedef std::chrono::high_resolution_clock Clock;
-	auto begin = Clock::now();
-	int numboards = 200000;
+	int numboards = 10000;
 	int totalwordcount = 0;
 	//int totalwordlist[200000][2];
 
@@ -316,20 +315,11 @@ int main()
 
 	//ofstream frequencyfile("freq.txt");
 
+	auto begin = Clock::now();
+
 	for (int i = 0; i < numboards; i++) {
 		generate(round, board, letterbonusmap, wordbonusmap, &wordcount, list_scores, list_words);
 		totalwordcount += wordcount;
-		//auto end = Clock::now();
-
-
-		std::chrono::duration<double, std::ratio<1, 1>> elapsed_secs = std::chrono::duration_cast<std::chrono::duration<double>>(end - begin);
-		cout << numboards << " random boards solved in "
-			<< elapsed_secs.count() << "seconds" << "with " << lookups << " lookups" <<
-			" and " << totalwordcount << " words " << endl;
-		cout << numboards / elapsed_secs.count() << "bps";
-
-		cout << wordcount << " words " << endl;
-		cout << totalwordcount << " words"
 
 		//for (int i = 0; i < wordcount; i++) {
 		//	if (strlen(list_words[i]) == 2) {
@@ -339,6 +329,18 @@ int main()
 		//}
 		
 	}
+
+	auto end = Clock::now();
+
+
+	std::chrono::duration<double, std::ratio<1, 1>> elapsed_secs = std::chrono::duration_cast<std::chrono::duration<double>>(end - begin);
+	cout << numboards << " random boards solved in "
+		<< elapsed_secs.count() << "seconds" << "with " << lookups << " lookups" <<
+		" and " << totalwordcount << " words " << endl;
+	cout << numboards / elapsed_secs.count() << "bps";
+
+	cout << wordcount << " words " << endl;
+	cout << totalwordcount << " words";
 	
 	
 	
