@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <cstring>
 #include <chrono>
 #include <ctime>
 #include <random>
@@ -16,9 +17,9 @@ using namespace std;
 __inline void build_trie(char** trie);
 __inline void add_word(const char* word, char** trie);
 __inline long search_letter(const char letter, char*** index);
-__inline void words_from(char ** index, int position, int depth, int running_score, int running_multiplier);
+__inline void words_from(char** index, int position, int depth, int running_score, int running_multiplier);
 __inline void initialise_probability();
-__inline char *strndup(char *str, int chars);
+__inline char* strndup(char* str, int chars);
 __inline void generate(int round, char* board, int* letterbonusmap, int* wordbonusmap, int* wordcount, int* list_scores, char** list_words);
 
 
@@ -42,50 +43,50 @@ int moves[16][8] = { {1, 4, 5, -1, -1, -1, -1, -1},
 					 {9, 10, 11, 13, 15, -1, -1, -1},
 					 {10, 11, 14, -1, -1, -1, -1, -1} };
 
-int letter_scores[26] = {1,2,3,2,1,4,2,4,1,8,5,1,3,1,1,3,10,1,1,1,1,4,4,8,4,10};
+int letter_scores[26] = { 1,2,3,2,1,4,2,4,1,8,5,1,3,1,1,3,10,1,1,1,1,4,4,8,4,10 };
 
 
 __inline void build_trie(char** trie) {
 	int count = 0;
 	fstream newfile;
-	newfile.open("words.txt", ios::in); //open a file to perform read operation using file object
-	if (newfile.is_open()) {   //checking whether the file is open
+	newfile.open("words.txt", ios::in); 
+	if (newfile.is_open()) {   
 		string tp;
-		while (getline(newfile, tp)) { //read data from file object and put it into string.
+		while (getline(newfile, tp)) { 
 			add_word(tp.c_str(), trie);
 			count++;
 		}
-		newfile.close(); //close the file object.
-	}	
+		newfile.close(); 
+	}
 }
 
 __inline void initialise_probability() {
 	fstream newfile;
-	newfile.open("letters.txt", ios::in); //open a file to perform read operation using file object
-	if (newfile.is_open()) {   //checking whether the file is open
+	newfile.open("letters.txt", ios::in); 
+	if (newfile.is_open()) {  
 		string tp;
-		getline(newfile, tp); //read data from file object and put it into string.
+		getline(newfile, tp); 
 		letter_sample = tp;
 		newfile.close();
-		 //close the file object.
+		
 	}
 }
 
 
 __inline void add_word(const char* word, char** trie) {
 
-	char ** current = trie;
+	char** current = trie;
 	int i = 0;
 	char letter;
-	
-	
+
+
 	while ((letter = word[i])) {
 		char** pos = &(current[int(letter) - 97 + 32]);
 		if (!*pos) {
-			*pos = (char *) new char*[27]();
+			*pos = (char*) new char* [27]();
 			allocbytes += 27;
 		}
-		current = (char **)*pos;
+		current = (char**)*pos;
 		i++;
 	}
 
@@ -104,17 +105,17 @@ __inline long search_letter(const char letter, char*** index) {
 	if (!pos) {
 		return false;
 	}
-	current = (char **)pos;
+	current = (char**)pos;
 	*index = current;
 	i++;
 
 	if (current[26] != (char*)0) {
 		return (long)&current[26]; //it's a word and returns locscoreloc. scoreloc is just the true flag to indicate
 									//that it's a word but contains the scoreloc if the word has been found
-	}			
-					//score is score in the list of scores, scoreloc is the location of the score
-	                //in the list and is stored in the trie
-	                //locscoreloc is where in the trie the location is stored
+	}
+	//score is score in the list of scores, scoreloc is the location of the score
+	//in the list and is stored in the trie
+	//locscoreloc is where in the trie the location is stored
 
 	else { return true; } // not a word but there is a longer word that starts with these letters 
 
@@ -132,15 +133,15 @@ int wordbonus[3][16] = { { 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 },
 						{ 2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1 },
 						{ 3,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1 } };
 int* _wordbonusmap;
-int letterbonus[3][16] = {{ 3,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1 }, 
-							{ 3,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1 }, 
-							{ 3,3,2,2,1,1,1,1,1,1,1,1,1,1,1,1 }};
+int letterbonus[3][16] = { { 3,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1 },
+							{ 3,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1 },
+							{ 3,3,2,2,1,1,1,1,1,1,1,1,1,1,1,1 } };
 int* _letterbonusmap;
 int _wordcount = 0;
 int valid = false;
 int quickpass = false;
 
-__inline void words_from(char ** index, int position, int depth, int running_score, int running_multiplier) {
+__inline void words_from(char** index, int position, int depth, int running_score, int running_multiplier) {
 
 	char letter = _board[position];
 	running_string[depth] = letter;
@@ -148,11 +149,11 @@ __inline void words_from(char ** index, int position, int depth, int running_sco
 	running_score = running_score + score_map[position] * _letterbonusmap[position];
 	running_multiplier = running_multiplier * _wordbonusmap[position];
 	int finalscore = (running_score * running_multiplier) + depth * 2;
-	int** locscoreloc = (int **)search_letter(letter, &index); //score is an integer
+	int** locscoreloc = (int**)search_letter(letter, &index); //score is an integer
 
 	if (depth >= 2) {
-		if (!locscoreloc){ //if not a word then locscoreloc contains flag and it is false
-			return; 
+		if (!locscoreloc) { //if not a word then locscoreloc contains flag and it is false
+			return;
 		}
 
 		if ((long)locscoreloc >= 2) { //if a valid word then locscoreloc contains true flag or scoreloc
@@ -165,35 +166,35 @@ __inline void words_from(char ** index, int position, int depth, int running_sco
 				score_cleanup[_wordcount] = locscoreloc;
 				(_wordcount)++;
 			}
-		
+
 			else { //otherwise the word has been found already and only the score needs updating
 				if (**locscoreloc < finalscore) {
 					**locscoreloc = finalscore;
-				} 
+				}
 			}
 
 		}
 	}
 
-	
+
 	char temp = _board[position];
 	_board[position] = '-';
 
-	for (int move: moves[position]) {
+	for (int move : moves[position]) {
 		if (move == -1) { break; }
 		if (_board[move] != '-') {
-			words_from (index, move, depth, running_score, running_multiplier);
+			words_from(index, move, depth, running_score, running_multiplier);
 			if (quickpass && valid) { break; }
 		}
 
 	}
-	
+
 	_board[position] = temp;
 	if (quickpass && valid) { return; }
 }
 
 static unsigned int g_seed;
-         
+
 __inline void fast_srand(int seed) {
 	g_seed = seed;
 }
@@ -211,7 +212,7 @@ __inline void generate(int round, char* board, int* letterbonusmap, int* wordbon
 		_wordcount = 0;
 		int vowels = 0;
 		for (int j = 0; j < 16; j++) {
-			if ((0x208222 >> ((_board[j] = letter_sample[fast_rand() % 2350]) & 0x1f)) & 1) {
+			if ((0x208222 >> ((_board[j] = letter_sample[fast_rand() % 26]) & 0x1f)) & 1) {
 				vowels++;
 			}
 			score_map[j] = letter_scores[int(_board[j]) - 97 + 32];
@@ -221,29 +222,33 @@ __inline void generate(int round, char* board, int* letterbonusmap, int* wordbon
 			continue;
 		}
 
-		quickpass = true;
-		for (int j = 0; j < 16; j++) {
-			valid = false;
-			words_from(trie, j, 0, 0, 1);
-			if (!valid) {
-				continue;
-			}
-		}
-
 		random_shuffle(begin(wordbonus[round]), end(wordbonus[round]));
 		_wordbonusmap = wordbonus[round];
 
 		random_shuffle(begin(letterbonus[round]), end(letterbonus[round]));
 		_letterbonusmap = letterbonus[round];
 
+
+		quickpass = true;   //quickpass is to make sure every tile has at least one word
+		for (int j = 0; j < 16; j++) {
+			valid = false;
+			words_from(trie, j, 0, 0, 1);
+			if (!valid) {
+				break;
+			}
+		}
+		if (!valid) {
+		   continue;
+		 }
+		
 		quickpass = false;
 		for (int j = 0; j < 16; j++) {
-				words_from(trie, j, 0, 0, 1);
-			}
+			words_from(trie, j, 0, 0, 1);
+		}
 
 		for (int j = 0; j < _wordcount; j++) {
 			*(score_cleanup[j]) = (int*)1;
-			}
+		}
 	}
 
 	memcpy(board, _board, 16 * sizeof(char));
@@ -268,12 +273,12 @@ __inline void generate(int round, char* board, int* letterbonusmap, int* wordbon
 //		}
 //}
 
-__inline char *strndup(char *str, int chars)
+__inline char* strndup(char* str, int chars)
 {
-	char *buffer;
+	char* buffer;
 	int n;
 
-	buffer = (char *)malloc(chars + 1);
+	buffer = (char*)malloc(chars + 1);
 	if (buffer)
 	{
 		for (n = 0; ((n < chars) && (str[n] != 0)); n++) buffer[n] = str[n];
@@ -285,8 +290,8 @@ __inline char *strndup(char *str, int chars)
 
 int main()
 {
-	
-	trie = new char*[27]();
+
+	trie = new char* [27]();
 	build_trie(trie);
 	cout << allocbytes << " bytes allocated" << endl;
 
@@ -302,33 +307,43 @@ int main()
 	int round = 1;
 	typedef std::chrono::high_resolution_clock Clock;
 	auto begin = Clock::now();
-	int numboards = 10000;
+	int numboards = 200000;
 	int totalwordcount = 0;
+	//int totalwordlist[200000][2];
 
 	//thread t(&threaded_generate);
 	//thread t2(&threaded_generate);
 
+	//ofstream frequencyfile("freq.txt");
+
 	for (int i = 0; i < numboards; i++) {
 		generate(round, board, letterbonusmap, wordbonusmap, &wordcount, list_scores, list_words);
 		totalwordcount += wordcount;
-	}
+		//auto end = Clock::now();
 
+
+		std::chrono::duration<double, std::ratio<1, 1>> elapsed_secs = std::chrono::duration_cast<std::chrono::duration<double>>(end - begin);
+		cout << numboards << " random boards solved in "
+			<< elapsed_secs.count() << "seconds" << "with " << lookups << " lookups" <<
+			" and " << totalwordcount << " words " << endl;
+		cout << numboards / elapsed_secs.count() << "bps";
+
+		cout << wordcount << " words " << endl;
+		cout << totalwordcount << " words"
+
+		//for (int i = 0; i < wordcount; i++) {
+		//	if (strlen(list_words[i]) == 2) {
+		//		frequencyfile << list_words[i] << endl;
+		//	}
+			
+		//}
+		
+	}
+	
+	
+	
 	//t.join();
 	//t2.join();
-	auto end = Clock::now();
-
-	
-	std::chrono::duration<double, std::ratio<1, 1>> elapsed_secs = std::chrono::duration_cast<std::chrono::duration<double>>(end - begin);
-	cout << numboards << " random boards solved in "
-		<< elapsed_secs.count() << "seconds"  << "with " << lookups << " lookups" <<
-		" and "<< totalwordcount << " words " << endl;
-	cout << numboards / elapsed_secs.count() << "bps";
-
-	cout << wordcount << " words " << endl;
-	//cout << totalwordcount << " words"
-	for (int i = 0; i < wordcount; i++) {
-		cout << " " << list_words[i] << ": " << list_scores[i] << " | ";
-	}
 
 }
 
