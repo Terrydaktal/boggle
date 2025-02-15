@@ -302,8 +302,8 @@ int main()
 	int letterbonusmap[16];
 	int wordcount = 0;
 	char board[16];
-	char* list_words[1600];
-	int list_scores[1600];
+	char** list_words = new char*[1600];
+	int * list_scores = new int [1600];
 	int round = 1;
 	typedef std::chrono::high_resolution_clock Clock;
 	int numboards = 10000;
