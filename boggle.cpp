@@ -212,7 +212,7 @@ __inline void generate(int round, char* board, int* letterbonusmap, int* wordbon
 		_wordcount = 0;
 		int vowels = 0;
 		for (int j = 0; j < 16; j++) {
-			if ((0x208222 >> ((_board[j] = letter_sample[fast_rand() % 26]) & 0x1f)) & 1) {
+			if ((0x208222 >> ((_board[j] = letter_sample[fast_rand() % 2350]) & 0x1f)) & 1) {
 				vowels++;
 			}
 			score_map[j] = letter_scores[int(_board[j]) - 97 + 32];
