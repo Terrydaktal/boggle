@@ -97,23 +97,23 @@ __inline void add_word(const char* word, char** trie) {
 }
 
 __inline long search_letter(const char letter, char*** index) {
-	int i = 0;
+	//this function is definitely being inlined on /O2
 	char** current = *index;
 	lookups++;
 
 	char* pos = current[int(letter) - 97 + 32];
 	if (!pos) {
-		return false;
+		return false;   //it is not a word and there is also no longer length word beginning with these letters
 	}
 	current = (char**)pos;
 	*index = current;
-	i++;
 
 	if (current[26] != (char*)0) {
-		return (long)&current[26]; //it's a word and returns locscoreloc. scoreloc is just the true flag to indicate
-									//that it's a word but contains the scoreloc if the word has been found
-	}
+		return (long)&current[26]; //it's a word and returns the location of the location of the score
+	} //it is a word because there is a value other than 0 at the 27th (flags) position on this letter
+
 	//score is score in the list of scores, scoreloc is the location of the score
+	//scoreloc is just the true flag to indicate that it's a word but contains the scoreloc if the word has been found
 	//in the list and is stored in the trie
 	//locscoreloc is where in the trie the location is stored
 
@@ -149,7 +149,7 @@ __inline void words_from(char** index, int position, int depth, int running_scor
 	running_score = running_score + score_map[position] * _letterbonusmap[position];
 	running_multiplier = running_multiplier * _wordbonusmap[position];
 	int finalscore = (running_score * running_multiplier) + depth * 2;
-	int** locscoreloc = (int**)search_letter(letter, &index); //score is an integer
+	int** locscoreloc = (int**)search_letter(letter, &index); 
 
 	if (depth >= 2) {
 		if (!locscoreloc) { //if not a word then locscoreloc contains flag and it is false
@@ -212,7 +212,7 @@ __inline void generate(int round, char* board, int* letterbonusmap, int* wordbon
 		_wordcount = 0;
 		int vowels = 0;
 		for (int j = 0; j < 16; j++) {
-			if ((0x208222 >> ((_board[j] = letter_sample[fast_rand() % 2350]) & 0x1f)) & 1) {
+			if ((0x208222 >> ((_board[j] = letter_sample[fast_rand() % 26]) & 0x1f)) & 1) {
 				vowels++;
 			}
 			score_map[j] = letter_scores[int(_board[j]) - 97 + 32];
@@ -222,10 +222,10 @@ __inline void generate(int round, char* board, int* letterbonusmap, int* wordbon
 			continue;
 		}
 
-		random_shuffle(begin(wordbonus[round]), end(wordbonus[round]));
+		random_shuffle(begin(wordbonus[round]), end(wordbonus[round])); //windows specific code
 		_wordbonusmap = wordbonus[round];
 
-		random_shuffle(begin(letterbonus[round]), end(letterbonus[round]));
+		random_shuffle(begin(letterbonus[round]), end(letterbonus[round])); 
 		_letterbonusmap = letterbonus[round];
 
 
@@ -240,7 +240,7 @@ __inline void generate(int round, char* board, int* letterbonusmap, int* wordbon
 		if (!valid) {
 		   continue;
 		 }
-		
+
 		quickpass = false;
 		for (int j = 0; j < 16; j++) {
 			words_from(trie, j, 0, 0, 1);
@@ -306,14 +306,14 @@ int main()
 	int * list_scores = new int [1600];
 	int round = 1;
 	typedef std::chrono::high_resolution_clock Clock;
-	int numboards = 10000;
+	int numboards = 100000;
 	int totalwordcount = 0;
 	//int totalwordlist[200000][2];
 
 	//thread t(&threaded_generate);
 	//thread t2(&threaded_generate);
 
-	//ofstream frequencyfile("freq.txt");
+	ofstream frequencyfile("freq.txt");
 
 	auto begin = Clock::now();
 
@@ -325,7 +325,7 @@ int main()
 		//	if (strlen(list_words[i]) == 2) {
 		//		frequencyfile << list_words[i] << endl;
 		//	}
-			
+		//	
 		//}
 		
 	}
