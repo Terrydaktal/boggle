@@ -222,7 +222,7 @@ __inline void generate(int round, char* board, int* letterbonusmap, int* wordbon
 			continue;
 		}
 
-		random_shuffle(begin(wordbonus[round]), end(wordbonus[round])); //windows specific code
+		random_shuffle(begin(wordbonus[round]), end(wordbonus[round]));
 		_wordbonusmap = wordbonus[round];
 
 		random_shuffle(begin(letterbonus[round]), end(letterbonus[round])); 
