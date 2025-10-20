@@ -12,7 +12,7 @@
 #include <immintrin.h>  // SSE/AVX/AVX-512 intrinsics
 
 using namespace std;
-
+#define letter_sample_size 2350
 // Cache line size constant
 #define CACHE_LINE_SIZE 64
 
@@ -65,8 +65,7 @@ int flat_trie_size = 0;
 int flat_trie_next_free = 1;
 
 int lookups = 0;
-CACHE_ALIGNED char letter_sample[26];
-int letter_sample_size = 0;
+CACHE_ALIGNED char letter_sample[letter_sample_size];
 
 // Optimized adjacency lookup - cache aligned
 CACHE_ALIGNED const int moves[16][8] = {
@@ -378,7 +377,6 @@ inline void initialise_probability() {
     if (newfile.is_open()) {
         string tp;
         getline(newfile, tp);
-        letter_sample_size = min((int)tp.length(), 26);
         for (int i = 0; i < letter_sample_size; i++) {
             letter_sample[i] = tp[i] | 0x20;
         }
@@ -465,11 +463,33 @@ inline void words_from_flat(int current_node, int position, int depth, int runni
 
 inline void generate_flat(int round, char* board, int* letterbonusmap, int* wordbonusmap, int* wordcount, int* list_scores, char** list_words) {
     static int shuffle_count[3] = {0};
-    if (UNLIKELY(shuffle_count[round]++ % 100 == 0)) {
-        for (int i = 15; i > 0; i--) {
-            int j = fast_rand() % (i + 1);
-            swap(wordbonus[round][i], wordbonus[round][j]);
-            swap(letterbonus[round][i], letterbonus[round][j]);
+    for (int i = 15; i > 0; i--) {
+        int j = fast_rand() % (i + 1);
+        swap(wordbonus[round][i], wordbonus[round][j]);
+    }
+    
+    // Shuffle letter bonus
+    for (int i = 15; i > 0; i--) {
+        int j = fast_rand() % (i + 1);
+        swap(letterbonus[round][i], letterbonus[round][j]);
+    }
+    
+    // Fix conflicts: swap 3x letter bonus squares that conflict with 3x word bonus
+    for (int i = 0; i < 16; i++) {
+        if (wordbonus[round][i] == 3 && letterbonus[round][i] == 3) {
+            // Find first square without 3x letter bonus and swap
+            bool swapped = false;
+            for (int j = 0; j < 16; j++) {
+                if (j != i && letterbonus[round][j] != 3) {
+                    swap(letterbonus[round][i], letterbonus[round][j]);
+                    swapped = true;
+                    break;
+                }
+            }
+            // Fallback: if no non-3 letter bonus found, swap with adjacent square
+            if (!swapped && i < 15) {
+                swap(letterbonus[round][i], letterbonus[round][i + 1]);
+            }
         }
     }
 
