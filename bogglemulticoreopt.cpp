@@ -22,8 +22,8 @@ int flat_trie_size = 0;
 int flat_trie_next_free = 1;
 
 thread_local long long thread_lookups = 0;
-char letter_sample[26];
-int letter_sample_size = 0;
+#define letter_sample_size 2350
+char letter_sample[letter_sample_size];
 
 // Optimized adjacency lookup
 const int moves[16][8] = {
@@ -161,7 +161,6 @@ inline void initialise_probability() {
     if (newfile.is_open()) {
         string tp;
         getline(newfile, tp);
-        letter_sample_size = min((int)tp.length(), 26);
         for (int i = 0; i < letter_sample_size; i++) {
             letter_sample[i] = tp[i] | 0x20;
         }
@@ -267,16 +266,35 @@ inline void words_from_flat(State& state, int current_node, int position, int de
 inline void generate_flat(int round, char* out_board, int* out_letterbonusmap, int* out_wordbonusmap, int* out_wordcount, int* out_list_scores, char** out_list_words) {
     static thread_local int shuffle_count[3] = {0};
 
+    // Replace the shuffle section in generate_flat() with this:
+
     int local_wordbonus[16];
     memcpy(local_wordbonus, wordbonus[round], 16 * sizeof(int));
     int local_letterbonus[16];
     memcpy(local_letterbonus, letterbonus[round], 16 * sizeof(int));
 
-    if (shuffle_count[round]++ % 100 == 0) {
-        for (int i = 15; i > 0; i--) {
-            int j = fast_rand() % (i + 1);
-            swap(local_wordbonus[i], local_wordbonus[j]);
-            swap(local_letterbonus[i], local_letterbonus[j]);
+    // Shuffle word bonus
+    for (int i = 15; i > 0; i--) {
+        int j = fast_rand() % (i + 1);
+        swap(local_wordbonus[i], local_wordbonus[j]);
+    }
+
+    // Shuffle letter bonus
+    for (int i = 15; i > 0; i--) {
+        int j = fast_rand() % (i + 1);
+        swap(local_letterbonus[i], local_letterbonus[j]);
+    }
+
+    // Fix conflicts: swap 3x letter bonus squares that conflict with 3x word bonus
+    for (int i = 0; i < 16; i++) {
+        if (local_wordbonus[i] == 3 && local_letterbonus[i] == 3) {
+            // Find first square without 3x letter bonus and swap
+            for (int j = i + 1; j < 16; j++) {
+                if (local_letterbonus[j] != 3) {
+                    swap(local_letterbonus[i], local_letterbonus[j]);
+                    break;
+                }
+            }
         }
     }
 
@@ -292,8 +310,8 @@ inline void generate_flat(int round, char* out_board, int* out_letterbonusmap, i
     state.letterbonusmap = local_letterbonus;
     state.scores = thread_scores;
 
-    int attempts = 0;
-    while (state.wordcount < 90 && attempts++ < 500) {
+
+    while (state.wordcount < 90) {
         state.wordcount = 0;
         int vowels = 0;
 
@@ -451,7 +469,16 @@ int main() {
     std::vector<long long> thread_lookups_vec(num_threads, 0);
 
     auto thread_func = [&](int tid, int num_boards) {
-        fast_srand(std::hash<std::thread::id>{}(std::this_thread::get_id()) ^ time(NULL));
+        // Initialize thread-local state INSIDE the thread
+        if (thread_scores == nullptr) {
+            thread_scores = new int[flat_trie_next_free]();
+        }
+        if (thread_word_indices == nullptr) {
+            thread_word_indices = new int[flat_trie_next_free]();
+        }
+
+        fast_srand(std::hash<std::thread::id>{}(std::this_thread::get_id()) ^ time(NULL) ^ tid);
+
         thread_lookups = 0;
 
         long long local_total_wordcount = 0;
@@ -473,6 +500,15 @@ int main() {
 
         thread_wordcounts[tid] = local_total_wordcount;
         thread_lookups_vec[tid] = thread_lookups;
+
+        if (thread_scores != nullptr) {
+            delete[] thread_scores;
+            thread_scores = nullptr;
+        }
+        if (thread_word_indices != nullptr) {
+            delete[] thread_word_indices;
+            thread_word_indices = nullptr;
+        }
     };
 
     for (int t = 0; t < num_threads; t++) {
